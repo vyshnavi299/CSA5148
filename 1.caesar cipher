@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <string.h>
+
+void encrypt(char *message, int k) {
+    char ch;
+    for(int i = 0; message[i] != '\0'; ++i) {
+        ch = message[i];
+        
+        // Encrypt uppercase letters
+        if(ch >= 'A' && ch <= 'Z') {
+            ch = ch + k;
+            
+            if(ch > 'Z') {
+                ch = ch - 'Z' + 'A' - 1;
+            }
+            
+            message[i] = ch;
+        }
+        // Encrypt lowercase letters
+        else if(ch >= 'a' && ch <= 'z') {
+            ch = ch + k;
+            
+            if(ch > 'z') {
+                ch = ch - 'z' + 'a' - 1;
+            }
+            
+            message[i] = ch;
+        }
+    }
+}
+
+int main() {
+    char message[100];
+    int k;
+    
+    printf("Enter a message to encrypt: ");
+    gets(message); // Using gets for simplicity. In practice, consider using fgets for safety.
+    
+    printf("Enter shift value: ");
+    scanf("%d", &k);
+    
+    // Ensure the shift value is within the valid range
+    k = k % 26;
+    
+    encrypt(message, k);
+    
+    printf("Encrypted message: %s\n", message);
+    
+    return 0;
+}
+
+OUTPUT:
+Enter a message to encrypt: hello
+Enter the key: 3
+Encrypted message: khoor
