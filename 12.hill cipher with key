@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <string.h>
+
+// Function to perform Hill cipher encryption
+void hillCipherEncrypt(int key[2][2], char plaintext[], char ciphertext[]) {
+    int i, j, k;
+    int len = strlen(plaintext);
+
+    // If the length of plaintext is odd, pad with 'X'
+    if (len % 2 != 0) {
+        plaintext[len] = 'X';
+        plaintext[len + 1] = '\0';
+        len++;
+    }
+
+    for (i = 0; i < len; i += 2) {
+        int block[2] = {0};
+
+        // Convert the current block of plaintext to numbers
+        for (j = 0; j < 2 && i + j < len; j++) {
+            block[j] = plaintext[i + j] - 'A';
+        }
+
+        // Perform the encryption for the block
+        for (j = 0; j < 2; j++) {
+            for (k = 0; k < 2; k++) {
+                ciphertext[i + j] += key[j][k] * block[k];
+            }
+            ciphertext[i + j] = (ciphertext[i + j] % 26 + 26) % 26; // Ensure it's in the range [0, 25]
+            ciphertext[i + j] += 'A'; // Convert back to letters
+        }
+    }
+}
+
+// Function to find the modular inverse of a number under modulo 26
+int modInverse(int a, int m) {
+    a = a % m;
+    int x;
+    for ( x = 1; x < m; x++) {
+        if ((a * x) % m == 1)
+            return x;
+    }
+    return 1; // return 1 if no modular inverse found
+}
+
+// Function to find the inverse of a 2x2 matrix under modulo 26
+void findInverse(int key[2][2], int inverse[2][2]) {
+    int det = key[0][0] * key[1][1] - key[0][1] * key[1][0];
+    det = (det % 26 + 26) % 26; // Ensure positive modulo
+    int invDet = modInverse(det, 26);
+
+    // Inverse matrix calculation
+    inverse[0][0] = (key[1][1] * invDet) % 26;
+    inverse[0][1] = (-key[0][1] * invDet + 26) % 26;
+    inverse[1][0] = (-key[1][0] * invDet + 26) % 26;
+    inverse[1][1] = (key[0][0] * invDet) % 26;
+}
+
+// Function to perform Hill cipher decryption
+void hillCipherDecrypt(int key[2][2], char ciphertext[], char decryptedtext[]) {
+    int i, j, k;
+    int len = strlen(ciphertext);
+    int inverseKey[2][2];
+    findInverse(key, inverseKey);
+
+    for (i = 0; i < len; i += 2) {
+        int block[2] = {0};
+
+        // Convert the current block of ciphertext to numbers
+        for (j = 0; j < 2 && i + j < len; j++) {
+            block[j] = ciphertext[i + j] - 'A';
+        }
+
+        // Perform the decryption for the block
+        for (j = 0; j < 2; j++) {
+            for (k = 0; k < 2; k++) {
+                decryptedtext[i + j] += inverseKey[j][k] * block[k];
+            }
+            decryptedtext[i + j] = (decryptedtext[i + j] % 26 + 26) % 26; // Ensure it's in the range [0, 25]
+            decryptedtext[i + j] += 'A'; // Convert back to letters
+        }
+    }
+}
+
+int main() {
+    // Define the Hill cipher key (2x2 matrix)
+    int key[2][2] = {
+        {9, 4},
+        {5, 7}
+    };
+
+    char plaintext[100];
+    char ciphertext[100] = {0};
+    char decryptedtext[100] = {0};
+
+    printf("Enter the message to be encrypted (uppercase letters only): ");
+    scanf("%s", plaintext);
+
+    printf("Original message: %s\n", plaintext);
+
+    // Encrypt the message
+    hillCipherEncrypt(key, plaintext, ciphertext);
+    printf("Encrypted message: %s\n", ciphertext);
+
+    // Decrypt the message
+    hillCipherDecrypt(key, ciphertext, decryptedtext);
+    printf("Decrypted message: %s\n", decryptedtext);
+
+    return 0;
+}
+
+output:
+Enter the message to be encrypted (uppercase letters only): meetmeatusualplaceattenratherthaneightoclock
+Original message: meetmeatusualplaceattenratherthaneightoclock
+Encrypted message: CMQZCMGFEUGYLGDFQOGFNVLEGFJNHMTLLRAGROMIHZOE
+Decrypted message: UWMPUWMHWWCWXDXOOWMHBWZFMHPWTTTOVWUYTLAQTKOY
