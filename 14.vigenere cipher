@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void encrypt(char *plaintext, int *keyStream, int len, char *ciphertext) {
+    for (int i = 0; i < len; i++) {
+        if (isalpha(plaintext[i])) {
+            ciphertext[i] = ((plaintext[i] - 'a' + keyStream[i]) % 26) + 'a';
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[len] = '\0';
+}
+
+void decrypt(char *ciphertext, int *keyStream, int len, char *plaintext) {
+    for (int i = 0; i < len; i++) {
+        if (isalpha(ciphertext[i])) {
+            plaintext[i] = ((ciphertext[i] - 'a' - keyStream[i] + 26) % 26) + 'a';
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+void findKey(char *ciphertext, char *targetPlaintext, int len, int *keyStream) {
+    for (int i = 0; i < len; i++) {
+        if (isalpha(ciphertext[i])) {
+            keyStream[i] = (ciphertext[i] - targetPlaintext[i] + 26) % 26;
+        } else {
+            keyStream[i] = 0; // Handle non-alphabetic characters
+        }
+    }
+}
+
+void printKey(int *keyStream, int len) {
+    for (int i = 0; i < len; i++) {
+        printf("%d ", keyStream[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    char plaintext[] = "send more money";
+    int keyStream[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    int len = strlen(plaintext);
+    char ciphertext[len + 1];
+    
+    // Encrypt the plaintext
+    encrypt(plaintext, keyStream, len, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    // Part (b): Decrypt the ciphertext to get "cash not needed"
+    char targetPlaintext[] = "cash not needed";
+    int newKeyStream[len];
+    findKey(ciphertext, targetPlaintext, len, newKeyStream);
+
+    // Print the new key stream
+    printf("New Key Stream: ");
+    printKey(newKeyStream, len);
+
+    // Verify decryption
+    char decryptedText[len + 1];
+    decrypt(ciphertext, newKeyStream, len, decryptedText);
+    printf("Decrypted Text with new key: %s\n", decryptedText);
+
+    return 0;
+}
+
+output:
+Ciphertext: beok bjfp owwey
+New Key Stream: 25 4 22 3 0 14 21 12 2 0 10 18 19 0 21
+Decrypted Text with new key: cash notn eeded
