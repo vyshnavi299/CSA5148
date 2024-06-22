@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_CHAR 256
+
+// Function to find the frequency of each character in the ciphertext
+void findFrequency(char* text, int* freq) {
+    int i;
+    for (i = 0; text[i] != '\0'; i++) {
+        if (text[i] >= 32 && text[i] <= 126) {
+            freq[text[i]]++;
+        }
+    }
+}
+
+// Function to find the character with the highest frequency
+char findMaxFrequencyChar(int* freq) {
+    int max = -1;
+    char maxChar;
+    for (int i = 0; i < MAX_CHAR; i++) {
+        if (freq[i] > max) {
+            max = freq[i];
+            maxChar = i;
+        }
+    }
+    return maxChar;
+}
+
+// Function to decrypt the message using the provided substitution key
+void decryptMessage(char* ciphertext, char* decryptionKey, char* plaintext) {
+    int i;
+    for (i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 32 && ciphertext[i] <= 126) {
+            plaintext[i] = decryptionKey[ciphertext[i]];
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[i] = '\0';
+}
+
+int main() {
+    char ciphertext[] = "53‡‡†305))6*;4826)4‡.)4‡);806*;48†8¶60))85;;]8*;:‡*8†83 (88)5*†;46(;88*96*?;8)*‡(;485);5*†2:*‡(;4956*2(5*—4)8¶8* ;4069285);)6†8)4‡‡;1(‡9;48081;8:8‡1;48†85;4)485†528806*81 (‡9;48;(88;4(‡?34;48)4‡;161;:188;‡?;";
+    int freq[MAX_CHAR] = {0};
+    findFrequency(ciphertext, freq);
+
+    // Find the most frequent character in the ciphertext
+    char e_char = findMaxFrequencyChar(freq);
+
+    // Assuming the most frequent character is 'e'
+    char decryptionKey[MAX_CHAR];
+    for (int i = 0; i < MAX_CHAR; i++) {
+        decryptionKey[i] = i;  // Initialize with identity mapping
+    }
+    decryptionKey[e_char] = 'e';
+
+    // Assuming '‡' is 'e', '8' is 't', and '†' is 'h'
+    decryptionKey['‡'] = 'e';
+    decryptionKey['8'] = 't';
+    decryptionKey['†'] = 'h';
+
+    // Decrypt the message
+    char plaintext[1000];
+    decryptMessage(ciphertext, decryptionKey, plaintext);
+
+    // Print the decrypted message
+    printf("Decrypted message: %s\n", plaintext);
+
+    return 0;
+}
+output:
+Decrypted message: 53ççå305))6*;4t26)4ç.)4ç);t06*;4tåt╢60))t5;;]t*;:ç*tåt3 (tt)5*å;46(;tt*96*?;t)*ç(;4t5);5*å2:*ç(;4956*2(5*ù4)t╢t* ;40692t5);)6åt)4çç;1(ç9;4t0t1;t:tç1;4tåt5;4)4t5å52tt06*t1 (ç9;4t;(tt;4(ç?34;4t)4ç;161;:1tt;ç?;
