@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <math.h>
+
+// Function to calculate factorial
+double factorial(int n) {
+    double result = 1.0;
+    int i;
+    for ( i = 1; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+int main() {
+    int n = 25;
+    double fact = factorial(n);
+    double log2_fact = log2(fact); // Compute the base-2 logarithm
+
+    printf("The number of possible keys for the Playfair cipher (25!) is approximately 2^%.2f\n", log2_fact);
+    return 0;
+}
+
+output:
+The number of possible keys for the Playfair cipher (25!) is approximately 2^83.68
