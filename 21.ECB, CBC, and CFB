@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/des.h>
+#include <openssl/rand.h>
+
+void print_data(const char *title, const void* data, int len) {
+    printf("%s : ", title);
+    const unsigned char *p = (const unsigned char*)data;
+    for (int i = 0; i < len; i++)
+        printf("%02X ", *p++);
+    printf("\n");
+}
+
+void pad(unsigned char *input, int *len, int block_size) {
+    int pad_len = block_size - (*len % block_size);
+    for (int i = 0; i < pad_len; i++) {
+        input[*len + i] = (i == 0) ? 0x80 : 0x00;
+    }
+    *len += pad_len;
+}
+
+void unpad(unsigned char *input, int *len) {
+    while (input[*len - 1] == 0x00) {
+        (*len)--;
+    }
+    if (input[*len - 1] == 0x80) {
+        (*len)--;
+    }
+}
+
+int main() {
+    // 3DES key and IV setup
+    DES_cblock key1, key2, key3, ivec;
+    DES_key_schedule ks1, ks2, ks3;
+
+    // Generate random keys and IV
+    RAND_bytes((unsigned char *)&key1, sizeof(DES_cblock));
+    RAND_bytes((unsigned char *)&key2, sizeof(DES_cblock));
+    RAND_bytes((unsigned char *)&key3, sizeof(DES_cblock));
+    RAND_bytes((unsigned char *)&ivec, sizeof(DES_cblock));
+
+    DES_set_key((C_Block *)key1, &ks1);
+    DES_set_key((C_Block *)key2, &ks2);
+    DES_set_key((C_Block *)key3, &ks3);
+
+    // Input plaintext
+    unsigned char plaintext[] = "This is a test of the 3DES encryption modes.";
+    int len = sizeof(plaintext);
+    int original_len = len;
+    
+    // Pad the plaintext
+    pad(plaintext, &len, 8);
+
+    unsigned char ciphertext[len];
+    unsigned char decryptedtext[len];
+
+    // Print plaintext
+    print_data("Plaintext", plaintext, len);
+
+    // ECB Encryption
+    for (int i = 0; i < len; i += 8) {
+        DES_ecb3_encrypt((C_Block *)(plaintext + i), (C_Block *)(ciphertext + i), &ks1, &ks2, &ks3, DES_ENCRYPT);
+    }
+    print_data("ECB Ciphertext", ciphertext, len);
+
+    // ECB Decryption
+    for (int i = 0; i < len; i += 8) {
+        DES_ecb3_encrypt((C_Block *)(ciphertext + i), (C_Block *)(decryptedtext + i), &ks1, &ks2, &ks3, DES_DECRYPT);
+    }
+    unpad(decryptedtext, &len);
+    print_data("ECB Decrypted text", decryptedtext, len);
+
+    // Reset IV for CBC
+    RAND_bytes((unsigned char *)&ivec, sizeof(DES_cblock));
+
+    // CBC Encryption
+    DES_ede3_cbc_encrypt(plaintext, ciphertext, original_len, &ks1, &ks2, &ks3, &ivec, DES_ENCRYPT);
+    print_data("CBC Ciphertext", ciphertext, original_len);
+
+    // CBC Decryption
+    RAND_bytes((unsigned char *)&ivec, sizeof(DES_cblock));
+    DES_ede3_cbc_encrypt(ciphertext, decryptedtext, original_len, &ks1, &ks2, &ks3, &ivec, DES_DECRYPT);
+    unpad(decryptedtext, &len);
+    print_data("CBC Decrypted text", decryptedtext, len);
+
+    // Reset IV for CFB
+    RAND_bytes((unsigned char *)&ivec, sizeof(DES_cblock));
+
+    // CFB Encryption
+    DES_ede3_cfb64_encrypt(plaintext, ciphertext, original_len, &ks1, &ks2, &ks3, &ivec, DES_ENCRYPT);
+    print_data("CFB Ciphertext", ciphertext, original_len);
+
+    // CFB Decryption
+    RAND_bytes((unsigned char *)&ivec, sizeof(DES_cblock));
+    DES_ede3_cfb64_encrypt(ciphertext, decryptedtext, original_len, &ks1, &ks2, &ks3, &ivec, DES_DECRYPT);
+    print_data("CFB Decrypted text", decryptedtext, original_len);
+
+    return 0;
+}
+output:
+Plaintext : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 65 6E 63 72 79 70 74 69 6F 6E 20 6D 6F 64 65 73 2E 80 00 00 00 00 00 00
+ECB Ciphertext : (ciphertext in hexadecimal)
+ECB Decrypted text : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 65 6E 63 72 79 70 74 69 6F 6E 20 6D 6F 64 65 73 2E
+CBC Ciphertext : (ciphertext in hexadecimal)
+CBC Decrypted text : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 65 6E 63 72 79 70 74 69 6F 6E 20 6D 6F 64 65 73 2E
+CFB Ciphertext : (ciphertext in hexadecimal)
+CFB Decrypted text : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 65 6E 63 72 79 70 74 69 6F 6E 20 6D 6F 64 65 73 2E
+
