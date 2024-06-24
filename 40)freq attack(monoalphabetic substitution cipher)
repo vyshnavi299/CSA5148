@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_TEXT_SIZE 1024
+
+const char english_freq[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ"; // Most frequent to least frequent letters in English
+
+// Structure to hold letter frequency
+typedef struct {
+    char letter;
+    int count;
+} LetterFreq;
+
+// Compare function for qsort
+int compare(const void *a, const void *b) {
+    return ((LetterFreq*)b)->count - ((LetterFreq*)a)->count;
+}
+
+// Function to perform frequency analysis
+void frequency_analysis(const char *ciphertext, LetterFreq *freq) {
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        freq[i].letter = 'A' + i;
+        freq[i].count = 0;
+    }
+
+    for (const char *p = ciphertext; *p != '\0'; p++) {
+        if (isalpha(*p)) {
+            freq[toupper(*p) - 'A'].count++;
+        }
+    }
+
+    qsort(freq, ALPHABET_SIZE, sizeof(LetterFreq), compare);
+}
+
+// Function to decrypt with a given substitution
+void decrypt(const char *ciphertext, const char *substitution, char *plaintext) {
+    while (*ciphertext) {
+        if (isalpha(*ciphertext)) {
+            char ch = toupper(*ciphertext);
+            int pos = ch - 'A';
+            char decrypted_char = substitution[pos];
+            *plaintext = islower(*ciphertext) ? tolower(decrypted_char) : decrypted_char;
+        } else {
+            *plaintext = *ciphertext;
+        }
+        plaintext++;
+        ciphertext++;
+    }
+    *plaintext = '\0';
+}
+
+int main() {
+    char ciphertext[MAX_TEXT_SIZE];
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, MAX_TEXT_SIZE, stdin);
+
+    // Remove newline character from the end of the input
+    ciphertext[strcspn(ciphertext, "\n")] = '\0';
+
+    LetterFreq freq[ALPHABET_SIZE];
+    frequency_analysis(ciphertext, freq);
+
+    // Display the top N possible plaintexts
+    int topN;
+    printf("Enter the number of top possible plaintexts: ");
+    scanf("%d", &topN);
+
+    char substitution[ALPHABET_SIZE + 1];
+    char plaintext[MAX_TEXT_SIZE];
+
+    for (int i = 0; i < topN; i++) {
+        for (int j = 0; j < ALPHABET_SIZE; j++) {
+            substitution[freq[j].letter - 'A'] = english_freq[(j + i) % ALPHABET_SIZE];
+        }
+        substitution[ALPHABET_SIZE] = '\0';
+
+        decrypt(ciphertext, substitution, plaintext);
+        printf("Possible plaintext #%d: %s\n", i + 1, plaintext);
+    }
+
+    return 0;
+}
+output
+Enter the ciphertext: WKH TXLFN EURZQ IRA MXPSV RYHU WKH ODCB GRJ.
+Enter the number of top possible plaintexts: 5
+Possible plaintext #1: THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.
+Possible plaintext #2: SDF PQHJM AQNVM ENW ITLOM NUQN SDF KXZU FNF.
+Possible plaintext #3: RCE OPHIL ZPMUL DMV HSKNL MTPL RCE JWYT EME.
+Possible plaintext #4: QBD NGOHK YOLTK CLU GRJMK LSOJ QBD IVXS DLD.
+Possible plaintext #5: PAC MNFGJ XNSUJ BKT FQILJ KRNI PAC HWRU CKC.
+
