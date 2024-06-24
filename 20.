@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/des.h>
+#include <openssl/rand.h>
+
+void print_data(const char *title, const void* data, int len) {
+    printf("%s : ", title);
+    const unsigned char *p = (const unsigned char*)data;
+    for (int i = 0; i < len; i++)
+        printf("%02X ", *p++);
+    printf("\n");
+}
+
+int main() {
+    // 3DES key setup
+    DES_cblock key1, key2, key3;
+    DES_key_schedule ks1, ks2, ks3;
+
+    // Generate random keys
+    RAND_bytes((unsigned char *)&key1, sizeof(DES_cblock));
+    RAND_bytes((unsigned char *)&key2, sizeof(DES_cblock));
+    RAND_bytes((unsigned char *)&key3, sizeof(DES_cblock));
+
+    DES_set_key((C_Block *)key1, &ks1);
+    DES_set_key((C_Block *)key2, &ks2);
+    DES_set_key((C_Block *)key3, &ks3);
+
+    // Input plaintext
+    unsigned char plaintext[] = "This is a test of the 3DES ECB encryption.";
+    unsigned char ciphertext[sizeof(plaintext)];
+    unsigned char decryptedtext[sizeof(plaintext)];
+
+    // Print plaintext
+    print_data("Plaintext", plaintext, sizeof(plaintext));
+
+    // Encryption
+    for (int i = 0; i < sizeof(plaintext); i += 8) {
+        DES_ecb3_encrypt((C_Block *)(plaintext + i), (C_Block *)(ciphertext + i), &ks1, &ks2, &ks3, DES_ENCRYPT);
+    }
+    print_data("Ciphertext", ciphertext, sizeof(ciphertext));
+
+    // Decryption
+    for (int i = 0; i < sizeof(plaintext); i += 8) {
+        DES_ecb3_encrypt((C_Block *)(ciphertext + i), (C_Block *)(decryptedtext + i), &ks1, &ks2, &ks3, DES_DECRYPT);
+    }
+    print_data("Decrypted text", decryptedtext, sizeof(decryptedtext));
+
+    return 0;
+}
+output:
+Plaintext : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 45 43 42 20 65 6E 63 72 79 70 74 69 6F 6E 2E 00
+CipDecrypted text : 54 68 69 73 20 69 73 20 61 20 74 65 73 74 20 6F 66 20 74 68 65 20 33 44 45 53 20 45 43 42 20 65 6E 63 72 79 70 74 69 6F 6E 2E 00
+hertext : 6D 34 7B D8 34 C7 9D 6A D5 60 87 4A 65 22 A2 67 10 51 6A 1C 0C 15 E6 32 18 83 1F 83 26 D8 5E 9B 6B 23 2D 6B 22 3A 2E 54 
